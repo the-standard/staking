@@ -1,26 +1,53 @@
-// We require the Hardhat Runtime Environment explicitly here. This is optional
-// but useful for running the script in a standalone fashion through `node <script>`.
-//
-// You can also run a script with `npx hardhat run <script>`. If you do that, Hardhat
-// will compile your contracts, add the Hardhat Runtime Environment's members to the
-// global scope, and execute the script.
-const hre = require("hardhat");
+const { ethers, network } = require("hardhat");
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
-  const unlockTime = currentTimestampInSeconds + ONE_YEAR_IN_SECS;
+  const [ user ] = await ethers.getSigners();
+  const now = new Date();
+  const day = 60 * 60 * 24;
+  const firstStart = now - 2 * day;
 
-  const lockedAmount = hre.ethers.utils.parseEther("1");
+  const TST = await ethers.getContractAt('LimitedERC20', '0xa42b5cF31BD2b817aa16D515DAFDe79cccE6CD0B')
+  await run(`verify:verify`, {
+    address: TST.address,
+    constructorArguments: [
+      'The Standard Token', 'TST', 18
+    ],
+  });
 
-  const Lock = await hre.ethers.getContractFactory("Lock");
-  const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
+  const directory = await ethers.getContractAt('Directory', '0xda81118Ad13a2f83158333D7B7783b33e388E183')
+  await run(`verify:verify`, {
+    address: directory.address,
+    constructorArguments: [],
+  });
 
-  await lock.deployed();
+  for (let i = 0; i < 5; i++) {
+    const start = firstStart + i * day;
+    const startDate = new Date(start);
+    const end = start + day;
+    const maturity = end + day;
 
-  console.log(
-    `Lock with 1 ETH and unlock timestamp ${unlockTime} deployed to ${lock.address}`
-  );
+    const staking = await (await ethers.getContractFactory('Staking')).deploy(
+      `Standard Staking ${startDate.toDateString()}`, `STS${startDate.toLocaleDateString()}`,
+      start, end, maturity, TST.address, '0x9C777AD2575010E3ED67F6E849cfE1115BFE2A50',
+      1000 * i, 1000000
+    );
+    await staking.deployed();
+    const add = await directory.add(staking.address);
+    await add.wait();
+
+    if (i === 0) {
+      await new Promise(resolve => setTimeout(resolve, 60000));
+
+      await run(`verify:verify`, {
+        address: staking.address,
+        constructorArguments: [
+          `Standard Staking ${startDate.toDateString()}`, `STS${startDate.toLocaleDateString()}`,
+          start, end, maturity, TST.address, '0x9C777AD2575010E3ED67F6E849cfE1115BFE2A50',
+          1000 * i, 1000000
+        ],
+      });
+    }
+  }
 }
 
 // We recommend this pattern to be able to use async/await everywhere
