@@ -15,14 +15,13 @@ contract Staking is ERC721, Ownable {
     uint256 public windowStart;         // the start time for the 'stake'
     uint256 public windowEnd;           // the end time for the 'stake'
     uint256 public maturity;            // the maturity date
-    uint256 public initialisedAt;       // the time of contract initialisation (epoch time)
     uint256 public allocatedSeuro;      // the amount of seuro allocated, inc rewards
 
     address public immutable TST_ADDRESS;
     address public immutable SEURO_ADDRESS;
     uint256 public immutable SI_RATE;   // simple interest rate for the bond (factor of 10 ** 5)
     uint256 public immutable minTST;    // the allowed minimum amount of TST to bond
-    uint256 public immutable tstEurPrice;    // the allowed minimum amount of TST to bond
+    uint256 public immutable tstEUROsPrice;    // the allowed minimum amount of TST to bond
 
     mapping(address => Position) private _positions;
 
@@ -35,7 +34,7 @@ contract Staking is ERC721, Ownable {
     constructor(
         string memory _name, string memory _symbol, uint256 _start, uint256 _end, 
         uint256 _maturity, address _standardAddress, address _seuroAddress, uint256 _si,
-        uint256 _tstEurPrice
+        uint256 _tstEUROsPrice
     ) ERC721(_name, _symbol) Ownable(msg.sender) {
         SI_RATE = _si;
         TST_ADDRESS = _standardAddress;
@@ -43,19 +42,24 @@ contract Staking is ERC721, Ownable {
         windowStart = _start;
         windowEnd = _end;
         maturity = _maturity;
-        initialisedAt = block.timestamp;
         minTST = 1 ether;
-        tstEurPrice = _tstEurPrice;
+        tstEUROsPrice = _tstEUROsPrice;
     }
 
-    function activate() external onlyOwner { require(active == false, "err-already-active"); active = true; }
+    function activate() external onlyOwner { 
+        require(active == false, "err-already-active");
+        active = true;
+    }
 
-    function disable() external onlyOwner { require(active, "err-not-active"); active = false; }
+    function disable() external onlyOwner {
+        require(active, "err-not-active");
+        active = false;
+    }
 
     // calculates the reward in SEURO based in the input of amount of TSTs
     function calculateReward(uint256 _amount) public view returns (uint256 reward) {
         uint256 tstReward = _amount * SI_RATE / HUNDRED_PC;
-        return tstReward * tstEurPrice / 10 ** tstPriceDec;
+        return tstReward * tstEUROsPrice / 10 ** tstPriceDec;
     }
 
     // fetches the balance of the contract for the give erc20 token
