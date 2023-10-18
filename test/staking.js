@@ -1,4 +1,4 @@
-const { ethers } = require('hardhat');
+const { ethers, network } = require('hardhat');
 const { expect } = require('chai');
 
 let owner, user1, user2, EUROs, TST, StakingContract, ERC20Contract;
@@ -267,6 +267,9 @@ describe('Staking', async () => {
       await Staking.disable();
       mint = Staking.connect(user1).mint(standardBalance);
       await expect(mint).to.be.revertedWith('err-not-active');
+
+      // reset the time travel we did, otherwise it upsets the other tests
+      await network.provider.send("hardhat_reset")
     });
 
     it('tests the exchange rate', async () => {
@@ -338,6 +341,9 @@ describe('Staking', async () => {
       // can't burn with no position.
       burn = Staking.connect(user2).burn();
       await expect(burn).to.be.revertedWith('err-not-valid');
+
+      // reset the time travel we did, otherwise it upsets the other tests
+      await network.provider.send("hardhat_reset")
     });
   });
 
