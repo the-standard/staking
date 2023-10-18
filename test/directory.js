@@ -15,7 +15,7 @@ function address() {
   return wallet.address;
 }
 
-describe.only('StakingDirectory', async () => {
+describe('StakingDirectory', async () => {
   it('adds an address to the directory', async () => {
     const addr1 = address();
     const addr2 = address();
