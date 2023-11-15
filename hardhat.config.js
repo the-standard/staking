@@ -6,15 +6,15 @@ require("@nomiclabs/hardhat-etherscan");
 
 const { 
   MAIN_ACCOUNT_PRIVATE_KEY, TEST_ACCOUNT_PRIVATE_KEY, ARBISCAN_KEY, ALCHEMY_ARBITRUM_KEY,
-  ALCHEMY_ARBITRUM_GOERLI_KEY
+  ALCHEMY_ARBITRUM_SEPOLIA_KEY
 } = process.env;
 
 module.exports = {
   solidity: "0.8.20",
   defaultNetwork: 'hardhat',
   networks: {
-    arbitrum_goerli: {
-      url: `https://arb-goerli.g.alchemy.com/v2/${ALCHEMY_ARBITRUM_GOERLI_KEY}`,
+    arbitrum_sepolia: {
+      url: `https://arb-sepolia.g.alchemy.com/v2/${ALCHEMY_ARBITRUM_SEPOLIA_KEY}`,
       accounts: [TEST_ACCOUNT_PRIVATE_KEY]
     },
     arbitrum: {
@@ -25,7 +25,18 @@ module.exports = {
   etherscan: {
     apiKey: {
       arbitrumGoerli: ARBISCAN_KEY,
-      arbitrumOne: ARBISCAN_KEY
-    }
+      arbitrumOne: ARBISCAN_KEY,
+      arbitrumSepolia: ARBISCAN_KEY
+    },
+    customChains: [
+      {
+        network: "arbitrumSepolia",
+        chainId: 421614,
+        urls: {
+          apiURL: "https://api-sepolia.arbiscan.io/api",
+          browserURL: "https://sepolia.arbiscan.io/"
+        }
+      }
+    ]
   }
 };
